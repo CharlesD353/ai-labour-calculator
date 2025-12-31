@@ -144,7 +144,6 @@ export interface YearlyProjection {
     baseline: number;                // From GDP/population growth
     aiInduced: number;               // From AI cost reduction (elasticity)
     newTasks: number;                // From AI capability creating new work
-    humanPreference: number;         // Shift toward human-preferred tasks
   };
   
   // Aggregated metrics
@@ -285,13 +284,11 @@ function calculateComputeCost(
  * 1. Baseline growth (GDP/population)
  * 2. AI-induced demand (cheaper cognitive work → more gets done)
  * 3. New task creation (AI capabilities enable new work categories)
- * 4. Human preference growth (some work shifts toward "must be human")
  */
 interface DemandComponents {
   baseline: number;       // Multiplier from GDP/population growth
   aiInduced: number;      // Multiplier from AI cost reduction
   newTasks: number;       // Multiplier from new task creation
-  humanPreference: number; // Additional human-preferred hours
 }
 
 function calculateCognitiveWorkDemand(
@@ -300,7 +297,6 @@ function calculateCognitiveWorkDemand(
   baselineDemandGrowth: number,
   demandElasticity: number,
   newTaskCreationRate: number,
-  humanPreferencePremium: number,
   aiCostReduction: number,      // How much cheaper is AI now vs 2024 (0-1 scale)
   substitutabilityGrowth: number // How much has σ multiplier grown from initial
 ): { totalHours: number; components: DemandComponents } {
@@ -318,18 +314,11 @@ function calculateCognitiveWorkDemand(
   // Tied to σ growth - as AI becomes more capable, new use cases emerge
   const newTaskMultiplier = 1 + newTaskCreationRate * substitutabilityGrowth * yearsFromBase;
   
-  // 4. Human preference: some fraction of work shifts toward "must be human"
-  // This adds to total demand but is human-only
-  const humanPreferenceHours = baseCognitiveHours * 
-    humanPreferencePremium * yearsFromBase;
-  
   // Total cognitive work demand
-  const baseAIAddressableDemand = baseCognitiveHours * 
+  const totalHours = baseCognitiveHours * 
     baselineMultiplier * 
     Math.max(1, aiInducedMultiplier) * 
     newTaskMultiplier;
-  
-  const totalHours = baseAIAddressableDemand + humanPreferenceHours;
   
   return {
     totalHours,
@@ -337,7 +326,6 @@ function calculateCognitiveWorkDemand(
       baseline: baselineMultiplier,
       aiInduced: Math.max(1, aiInducedMultiplier),
       newTasks: newTaskMultiplier,
-      humanPreference: humanPreferenceHours,
     },
   };
 }
@@ -800,7 +788,6 @@ export function runModel(params: ParameterValues): ModelOutputs {
       params.baselineDemandGrowth ?? 0.03,
       params.demandElasticity ?? 0.5,
       params.newTaskCreationRate ?? 0.1,
-      params.humanPreferencePremium ?? 0.02,
       effectiveCostReduction,
       substitutabilityGrowth
     );
@@ -879,12 +866,9 @@ export function runModel(params: ParameterValues): ModelOutputs {
       ta.wageAtCeiling = eq.wageAtCeiling;
     });
     
-    // Add human-preference hours (these are 100% human by definition)
-    const humanPreferenceHours = demandResult.components.humanPreference;
-    
     // Calculate aggregate metrics
     const totalAIHours = tierAllocations.reduce((sum, ta) => sum + ta.hoursAI, 0);
-    const totalHumanHours = tierAllocations.reduce((sum, ta) => sum + ta.hoursHuman, 0) + humanPreferenceHours;
+    const totalHumanHours = tierAllocations.reduce((sum, ta) => sum + ta.hoursHuman, 0);
     const aiTaskShare = totalAIHours / totalCognitiveWorkHours;
     const humanTaskShare = totalHumanHours / totalCognitiveWorkHours;
     

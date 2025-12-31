@@ -58,7 +58,7 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
             </span>
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-2 text-xs">
+        <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="text-center">
             <div className="text-zinc-500">GDP</div>
             <div className="text-emerald-400">×{targetProjection.demandComponents.baseline.toFixed(2)}</div>
@@ -70,10 +70,6 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
           <div className="text-center">
             <div className="text-zinc-500">New Tasks</div>
             <div className="text-emerald-400">×{targetProjection.demandComponents.newTasks.toFixed(2)}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-zinc-500">Human-Only</div>
-            <div className="text-emerald-400">+{formatHours(targetProjection.demandComponents.humanPreference)}</div>
           </div>
         </div>
       </div>

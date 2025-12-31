@@ -256,21 +256,9 @@ export const parameters: Parameter[] = [
     group: 'demand',
   },
   {
-    id: 'humanPreferencePremium',
-    label: 'Human Preference Growth',
-    description: 'Annual growth in demand for human-performed work due to authenticity/trust preferences.',
-    default: 0.02, // 2% more "must be human" tasks per year
-    min: 0,
-    max: 0.10,
-    step: 0.01,
-    unit: '/year',
-    format: 'percent',
-    group: 'demand',
-  },
-  {
     id: 'tierShiftRate',
     label: 'Tier Shift Rate',
-    description: 'When AI automates lower tiers, some demand shifts UP to harder tiers. 0.3 = 30% of automated work generates new demand at higher tiers.',
+    description: 'AI automation creates new demand at higher tiers. 0.3 = for every 100 AI-hours at Routine, 30 NEW hours of Standard work appear. Models "now that AI handles X, we attempt harder Y".',
     default: 0.3, // 30% of automated work creates demand for more complex work
     min: 0,
     max: 1.0,

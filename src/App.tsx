@@ -261,10 +261,6 @@ function App() {
                   <li><strong className="text-zinc-300">rate = 0.3+</strong> — AI creates major new industries (like internet → e-commerce)</li>
                 </ul>
                 <p>
-                  <strong className="text-emerald-400">Human Preference Premium:</strong> Some tasks have growing demand for 
-                  <em>specifically human</em> performance—artisanal goods, human therapists, "certified human" content.
-                </p>
-                <p>
                   <strong className="text-amber-400">Tier Shift Rate:</strong> When AI automates lower-complexity work, 
                   organizations don't just save money—they <em>attempt more complex work</em>. "Now that AI handles 
                   routine tasks, we can do frontier-level research on everything." This shifts demand <em>up</em> the 
@@ -625,13 +621,6 @@ function App() {
                   <p className="mt-1">
                     <strong>At rate=0:</strong> AI only redistributes existing work, no new categories.
                     <strong className="ml-2">At rate=0.3+:</strong> AI creates major new industries.
-                  </p>
-                </div>
-                <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
-                  <p className="text-zinc-300 font-medium mb-1">Human Preference Growth <span className="text-zinc-500 font-normal">(unit: %/year)</span></p>
-                  <p>
-                    Annual growth in demand specifically for human-performed work. 
-                    Models growing preference for "certified human" content, artisanal goods, human therapists, etc.
                   </p>
                 </div>
                 <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-800/40">
