@@ -255,19 +255,6 @@ export const parameters: Parameter[] = [
     format: 'number',
     group: 'demand',
   },
-  {
-    id: 'tierShiftRate',
-    label: 'Tier Shift Rate',
-    description: 'AI automation creates new demand at higher tiers. 0.3 = for every 100 AI-hours at Routine, 30 NEW hours of Standard work appear. Models "now that AI handles X, we attempt harder Y".',
-    default: 0.3, // 30% of automated work creates demand for more complex work
-    min: 0,
-    max: 1.0,
-    step: 0.1,
-    unit: '',
-    format: 'number',
-    group: 'demand',
-  },
-  
   // === TIER PARAMETERS ===
   // Each tier can be configured independently with its own σ growth trajectory
   ...TIER_CONFIGS.flatMap(tier => [

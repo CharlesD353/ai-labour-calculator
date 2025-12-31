@@ -348,50 +348,6 @@ const SECONDS_PER_YEAR = 365.25 * 24 * 3600;
 const AI_UTILIZATION = 0.3; // Fraction of compute capacity used for cognitive work
 
 /**
- * Calculate tier-shifted demand
- * 
- * When AI automates lower tiers, organizations don't just do the same work cheaper—
- * they attempt MORE complex work. "Now that AI handles routine tasks, we can afford
- * to do frontier-level research on everything."
- * 
- * This shifts demand UP the tier stack proportionally to AI automation at lower tiers.
- */
-function calculateTierShiftedDemand(
-  tiers: TaskTier[],
-  baseTierHours: number[],
-  aiSharePerTier: number[],
-  tierShiftRate: number
-): number[] {
-  const n = tiers.length;
-  const shiftedHours = [...baseTierHours];
-  
-  // For each tier i, calculate induced demand from automation at lower tiers
-  // Work automated at tier i can induce demand at tier i+1, i+2, etc.
-  for (let i = 0; i < n - 1; i++) {
-    // Hours done by AI at this tier
-    const aiHoursAtTier = baseTierHours[i] * aiSharePerTier[i];
-    
-    // Some fraction of that AI work creates demand for more complex work
-    const inducedDemand = aiHoursAtTier * tierShiftRate;
-    
-    // Distribute induced demand to higher tiers
-    // Weight by inverse tier distance (closer tiers get more)
-    // e.g., Routine automation mostly creates Standard demand, some Complex, less Expert
-    let totalWeight = 0;
-    for (let j = i + 1; j < n; j++) {
-      totalWeight += 1 / (j - i);
-    }
-    
-    for (let j = i + 1; j < n; j++) {
-      const weight = (1 / (j - i)) / totalWeight;
-      shiftedHours[j] += inducedDemand * weight;
-    }
-  }
-  
-  return shiftedHours;
-}
-
-/**
  * Equilibrium wage calculation result for a single tier
  */
 interface TierEquilibriumResult {
@@ -795,38 +751,13 @@ export function runModel(params: ParameterValues): ModelOutputs {
     const totalCognitiveWorkHours = demandResult.totalHours;
     const demandGrowthFromBaseline = (totalCognitiveWorkHours / baseCognitiveHours) - 1;
     
-    // Calculate base hours per tier
-    const baseTierHours = taskTiers.map(tier => 
+    // Calculate hours per tier based on total demand and tier shares
+    const tierHoursArray = taskTiers.map(tier => 
       totalCognitiveWorkHours * tier.shareOfCognitive
     );
     
-    // First pass: allocate compute to get AI shares
+    // Allocate compute optimally across tiers
     // Use FIXED workforce (baseCognitiveHours) for human capacity, not demand-scaled hours
-    const preliminaryAllocations = allocateComputeOptimally(
-      taskTiers,
-      baseTierHours,
-      tierSigmaArray,
-      efficiencyMultiplier,
-      effectiveComputeFlops,
-      computeCostPerExaflop,
-      params.humanWageFloor,
-      baseCognitiveHours  // Fixed workforce, not demand
-    );
-    
-    // Calculate tier-shift induced demand
-    // When AI automates lower tiers, some demand shifts UP to harder tiers
-    // This captures: "Now that AI handles the routine stuff, we can attempt more complex work"
-    const tierShiftRate = params.tierShiftRate ?? 0.3;
-    const tierHoursArray = calculateTierShiftedDemand(
-      taskTiers,
-      baseTierHours,
-      preliminaryAllocations.map(ta => ta.aiShare),
-      tierShiftRate
-    );
-    
-    // Second pass: re-allocate with shifted demand
-    // This may change AI shares slightly, but the main effect is increased demand at higher tiers
-    // Use FIXED workforce (baseCognitiveHours) - workforce doesn't scale with demand
     const tierAllocations = allocateComputeOptimally(
       taskTiers,
       tierHoursArray,

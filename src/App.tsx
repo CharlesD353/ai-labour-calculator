@@ -260,12 +260,6 @@ function App() {
                   <li><strong className="text-zinc-300">rate = 0.1</strong> — Modest new work (personalized tutoring, real-time translation)</li>
                   <li><strong className="text-zinc-300">rate = 0.3+</strong> — AI creates major new industries (like internet → e-commerce)</li>
                 </ul>
-                <p>
-                  <strong className="text-amber-400">Tier Shift Rate:</strong> When AI automates lower-complexity work, 
-                  organizations don't just save money—they <em>attempt more complex work</em>. "Now that AI handles 
-                  routine tasks, we can do frontier-level research on everything." This shifts demand <em>up</em> the 
-                  tier stack, creating bottlenecks (and wage spikes) at Expert and Frontier tiers.
-                </p>
               </div>
             </div>
             <div className="pt-4 border-t border-zinc-800 mt-4 text-xs text-zinc-500">
@@ -621,14 +615,6 @@ function App() {
                   <p className="mt-1">
                     <strong>At rate=0:</strong> AI only redistributes existing work, no new categories.
                     <strong className="ml-2">At rate=0.3+:</strong> AI creates major new industries.
-                  </p>
-                </div>
-                <div className="bg-zinc-900/50 rounded-lg p-3 border border-amber-800/40">
-                  <p className="text-amber-300 font-medium mb-1">Tier Shift Rate <span className="text-zinc-500 font-normal">(unit: ratio, 0-1)</span></p>
-                  <p>
-                    When AI automates X hours at tier i, tierShiftRate × X hours of <em>new</em> demand is created 
-                    at higher tiers (weighted toward adjacent tiers). Models how automation frees up resources 
-                    to attempt more ambitious projects. Default 0.3 = 30% of automated work creates higher-tier demand.
                   </p>
                 </div>
               </div>
