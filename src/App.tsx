@@ -135,15 +135,15 @@ function App() {
             <div className="grid md:grid-cols-3 gap-3 text-xs">
               <div className="bg-zinc-900/50 rounded p-3 border border-zinc-800">
                 <p className="text-emerald-400">Optimist scenario</p>
-                <p className="text-zinc-500">Set σ max to 0.6 for all tiers.</p>
+                <p className="text-zinc-500">Set σ max to 0.6 for all task tiers. Human share stays high even in 2050.</p>
               </div>
               <div className="bg-zinc-900/50 rounded p-3 border border-zinc-800">
                 <p className="text-red-400">Pessimist scenario</p>
-                <p className="text-zinc-500">Set σ max to 0.99, half-life to 3 years.</p>
+                <p className="text-zinc-500">Set σ max to 0.99, half-life to 3 years. Human wages and employment fall sharply.</p>
               </div>
               <div className="bg-zinc-900/50 rounded p-3 border border-zinc-800">
                 <p className="text-amber-400">Compute-constrained</p>
-                <p className="text-zinc-500">Lower base compute to 10^20, raise tier FLOPs.</p>
+                <p className="text-zinc-500">Raise the compute requirements for all task tiers significantly. Compute becomes the binding constraint.</p>
               </div>
             </div>
           </div>
