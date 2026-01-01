@@ -64,11 +64,24 @@ export function ComputeCostTab({ projection, params }: ComputeCostTabProps) {
     gotCompute: ta.aiShare > 0.01,
   }));
 
+  // Count binding constraints
+  const constraintCounts = {
+    cost: tierAllocations.filter(ta => ta.bindingConstraint === 'cost').length,
+    compute: tierAllocations.filter(ta => ta.bindingConstraint === 'compute').length,
+    substitutability: tierAllocations.filter(ta => ta.bindingConstraint === 'substitutability').length,
+    humanCapacity: tierAllocations.filter(ta => ta.bindingConstraint === 'humanCapacity').length,
+  };
+
   return (
     <div className="bg-[#12121a] rounded-xl p-5 border border-zinc-800 space-y-6">
-      <h3 className="text-lg font-semibold text-zinc-100">
-        Compute Cost Analysis for {params.year}
-      </h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-zinc-100">
+          Compute Cost Analysis for {params.year}
+        </h3>
+        <span className="px-3 py-1 text-xs font-medium bg-indigo-900/50 text-indigo-300 rounded-full border border-indigo-700/50">
+          Market Clearing
+        </span>
+      </div>
 
       {/* Price summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -109,6 +122,32 @@ export function ComputeCostTab({ projection, params }: ComputeCostTabProps) {
             {formatExaflops(effectiveComputeFlops)} available
           </p>
         </div>
+      </div>
+
+      {/* Binding Constraints Summary */}
+      <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+        <h4 className="text-sm font-medium text-zinc-300 mb-3">Binding Constraints by Tier</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+            <span className="text-zinc-400">Cost: {constraintCounts.cost} tiers</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-amber-500"></span>
+            <span className="text-zinc-400">Compute: {constraintCounts.compute} tiers</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-violet-500"></span>
+            <span className="text-zinc-400">Substitutability: {constraintCounts.substitutability} tiers</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+            <span className="text-zinc-400">Human Capacity: {constraintCounts.humanCapacity} tiers</span>
+          </div>
+        </div>
+        <p className="text-xs text-zinc-500 mt-2">
+          The model clears a compute market: scarce compute goes to the highest bidders (by willingness-to-pay per FLOP), and the market price rises under scarcity.
+        </p>
       </div>
 
       {/* Clearing tier info */}
@@ -207,17 +246,27 @@ export function ComputeCostTab({ projection, params }: ComputeCostTabProps) {
               <tr>
                 <th className="text-left py-2 px-2">Tier</th>
                 <th className="text-right py-2 px-2">FLOPs/hr</th>
-                <th className="text-right py-2 px-2">Production $/hr</th>
-                <th className="text-right py-2 px-2">Market $/hr</th>
-                <th className="text-right py-2 px-2">Human Wage</th>
-                <th className="text-right py-2 px-2">Max WTP/hr</th>
-                <th className="text-right py-2 px-2">Got AI?</th>
+                <th className="text-right py-2 px-2">Production</th>
+                <th className="text-right py-2 px-2">Market</th>
+                <th className="text-right py-2 px-2">Human</th>
+                <th className="text-right py-2 px-2">AI Share</th>
+                <th className="text-center py-2 px-2">Constraint</th>
               </tr>
             </thead>
             <tbody>
               {tierAllocations.map((ta) => {
-                const maxWTP = Math.min(ta.tierWage, ta.tier.taskValue);
-                const gotCompute = ta.aiShare > 0.01;
+                const constraintColors: Record<string, string> = {
+                  cost: 'text-blue-400',
+                  compute: 'text-amber-400',
+                  substitutability: 'text-violet-400',
+                  humanCapacity: 'text-orange-400',
+                };
+                const constraintLabels: Record<string, string> = {
+                  cost: 'Cost',
+                  compute: 'Compute',
+                  substitutability: 'σ limit',
+                  humanCapacity: 'Human cap',
+                };
                 return (
                   <tr key={ta.tier.id} className="border-b border-zinc-800/50">
                     <td className="py-2 px-2">
@@ -228,7 +277,7 @@ export function ComputeCostTab({ projection, params }: ComputeCostTabProps) {
                         />
                         {ta.tier.name}
                         {ta.tier.id === clearingTier && (
-                          <span className="text-amber-400 text-xs">★ clearing</span>
+                          <span className="text-amber-400 text-xs">★</span>
                         )}
                       </span>
                     </td>
@@ -244,15 +293,13 @@ export function ComputeCostTab({ projection, params }: ComputeCostTabProps) {
                     <td className="text-right py-2 px-2 text-violet-400">
                       {formatCurrency(ta.tierWage)}
                     </td>
-                    <td className="text-right py-2 px-2 text-zinc-300">
-                      {formatCurrency(maxWTP)}
-                    </td>
                     <td className="text-right py-2 px-2">
-                      {gotCompute ? (
-                        <span className="text-emerald-400">{(ta.aiShare * 100).toFixed(0)}%</span>
-                      ) : (
-                        <span className="text-zinc-500">No (priced out)</span>
-                      )}
+                      <span className={ta.aiShare > 0.01 ? 'text-emerald-400' : 'text-zinc-500'}>
+                        {(ta.aiShare * 100).toFixed(0)}%
+                      </span>
+                    </td>
+                    <td className={`text-center py-2 px-2 text-xs ${constraintColors[ta.bindingConstraint]}`}>
+                      {constraintLabels[ta.bindingConstraint]}
                     </td>
                   </tr>
                 );
@@ -267,20 +314,20 @@ export function ComputeCostTab({ projection, params }: ComputeCostTabProps) {
         <h4 className="text-sm font-medium text-indigo-300 mb-2">How Market Clearing Works</h4>
         <div className="text-sm text-zinc-400 space-y-2">
           <p>
-            <span className="text-indigo-300">1. Reservation prices:</span> Each tier has a maximum willingness 
-            to pay per FLOP, bounded by both human wage (alternative) and task value (economic ceiling).
+            <span className="text-indigo-300">Uniform-price auction:</span> Each tier has a maximum willingness to pay
+            for compute, based on its equilibrium human wage (capped by task value) and its compute required per hour.
           </p>
           <p>
-            <span className="text-indigo-300">2. Auction allocation:</span> Compute goes to highest bidders first. 
-            Tiers are served in order of their willingness to pay until compute is exhausted.
+            <span className="text-indigo-300">Allocation + clearing price:</span> Tiers are served from highest bid to
+            lowest bid up to their σ limit. The marginal tier sets the market-clearing price; lower bidders are priced out.
           </p>
           <p>
-            <span className="text-indigo-300">3. Clearing price:</span> When compute is scarce, the marginal 
-            tier (last to get any compute) sets the market price. All users pay this price.
+            <span className="text-indigo-300">Wages and compute interact:</span> Wages rise when human labor is scarce,
+            which raises bids for compute. The model iterates wages and compute allocation until they stabilize.
           </p>
           <p>
-            <span className="text-indigo-300">4. Scarcity premium:</span> Market price can exceed production 
-            cost when demand outstrips supply. This reflects the true economic value of scarce compute.
+            <span className="text-indigo-300">Why this matters:</span> Using equilibrium wages avoids counterintuitive
+            outcomes where scarce-skill tiers (like Frontier) are skipped even when AI would be economical for them.
           </p>
         </div>
       </div>
