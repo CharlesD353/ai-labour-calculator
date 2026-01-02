@@ -229,7 +229,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             <p className="text-sm text-zinc-400 mb-6">Review your selections before applying them to the model.</p>
             
             <div className="space-y-3 mb-6">
-              {QUESTIONS.map((q, i) => {
+              {QUESTIONS.map((q) => {
                 const selectedOption = q.options.find(o => o.id === answers[q.id]);
                 return (
                   <div key={q.id} className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg border border-zinc-800">
