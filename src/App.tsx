@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ParameterControls } from './components/ParameterControls';
 import { ComputeSupplyChart } from './components/ComputeSupplyChart';
 import { TierCostChart } from './components/TierCostChart';
@@ -11,13 +11,50 @@ import { SensitivityChart } from './components/SensitivityChart';
 import { ComputeCostTab } from './components/ComputeCostTab';
 import { Tabs } from './components/Tabs';
 import { Collapsible } from './components/Collapsible';
+import { OnboardingWizard } from './components/OnboardingWizard';
 import { getDefaultValues } from './models/parameters';
 import type { ParameterValues } from './models/parameters';
 import { runModel } from './models/computeModel';
 import { calculateSensitivities } from './models/sensitivity';
 
+const ONBOARDING_KEY = 'ai-compute-onboarding-complete';
+
 function App() {
   const [params, setParams] = useState<ParameterValues>(getDefaultValues());
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  
+  // Check localStorage on mount to show onboarding for first-time visitors
+  useEffect(() => {
+    const hasCompletedOnboarding = localStorage.getItem(ONBOARDING_KEY);
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+  
+  const handleOnboardingComplete = (newParams: Partial<ParameterValues>) => {
+    // Merge user's choices with defaults (only defined values)
+    setParams(prev => {
+      const updated = { ...prev };
+      for (const [key, value] of Object.entries(newParams)) {
+        if (value !== undefined) {
+          (updated as Record<string, number>)[key] = value;
+        }
+      }
+      return updated;
+    });
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
+  
+  const handleOnboardingSkip = () => {
+    // Keep defaults, mark as completed
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
+  
+  const handleReopenOnboarding = () => {
+    setShowOnboarding(true);
+  };
   
   const handleParamChange = (id: string, value: number) => {
     setParams(prev => ({ ...prev, [id]: value }));
@@ -1425,15 +1462,31 @@ finalWage = min(rawWage, taskValue)`}
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
+      {/* Onboarding Wizard */}
+      {showOnboarding && (
+        <OnboardingWizard
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
+      
       {/* Header */}
       <header className="border-b border-zinc-800 bg-[#0a0a0f]/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-zinc-100">
-            AI Compute Bounds Calculator
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Explore how compute constraints affect AI/human labor substitution
-          </p>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-zinc-100">
+              AI Compute Bounds Calculator
+            </h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              Explore how compute constraints affect AI/human labor substitution
+            </p>
+          </div>
+          <button
+            onClick={handleReopenOnboarding}
+            className="px-3 py-1.5 text-xs bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-600/40 rounded-lg transition-colors"
+          >
+            Adjust Assumptions
+          </button>
         </div>
       </header>
       
