@@ -31,15 +31,6 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
   const baselineHumanHours = baseline2024?.totalHumanHours ?? targetProjection.totalHumanHours;
   const humanHoursChange = ((targetProjection.totalHumanHours - baselineHumanHours) / baselineHumanHours) * 100;
   
-  // Calculate average AI cost across tiers (market price), weighted by actual AI hours
-  const totalAIHoursForAvg = targetProjection.tierAllocations.reduce((sum, ta) => sum + ta.hoursAI, 0);
-  const avgAICost = totalAIHoursForAvg > 0 
-    ? targetProjection.tierAllocations.reduce((sum, ta) => sum + ta.aiCostPerHour * ta.hoursAI, 0) / totalAIHoursForAvg
-    : 0;
-  
-  // Calculate average production cost (hardware only)
-  const avgProductionCost = targetProjection.tierAllocations.reduce((sum, ta) => 
-    sum + ta.productionCostPerHour * ta.tier.shareOfCognitive, 0);
   
   // Scarcity premium from model
   const scarcityPremium = targetProjection.scarcityPremium;
