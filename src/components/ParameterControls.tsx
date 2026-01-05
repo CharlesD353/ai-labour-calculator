@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { parameters, formatValue, TIER_CONFIGS } from '../models/parameters';
 import type { Parameter, ParameterValues } from '../models/parameters';
-import { calculateSensitivities } from '../models/sensitivity';
 
 interface ParameterControlsProps {
   values: ParameterValues;
@@ -9,42 +8,14 @@ interface ParameterControlsProps {
   onReset: () => void;
 }
 
-function SensitivityBadge({ sensitivity, direction }: { 
-  sensitivity: number; 
-  direction: 'positive' | 'negative' | 'neutral';
-}) {
-  const absPercent = Math.abs(sensitivity * 100);
-  if (absPercent < 2) return null; // Don't show tiny sensitivities
-  
-  // Bar width scales with sensitivity (max 24px)
-  const barWidth = Math.min(24, Math.max(4, absPercent / 2));
-  
-  return (
-    <div className="flex items-center gap-1 ml-2" title={`${direction === 'positive' ? '+' : '-'}${absPercent.toFixed(0)}% sensitivity`}>
-      <div 
-        className="h-2 rounded-sm"
-        style={{
-          width: `${barWidth}px`,
-          backgroundColor: direction === 'positive' ? '#22c55e' : '#ef4444',
-          opacity: 0.7,
-        }}
-      />
-    </div>
-  );
-}
-
 function ParameterSlider({ 
   param, 
   value, 
   onChange,
-  sensitivity,
-  sensitivityDirection,
 }: { 
   param: Parameter; 
   value: number; 
   onChange: (value: number) => void;
-  sensitivity?: number;
-  sensitivityDirection?: 'positive' | 'negative' | 'neutral';
 }) {
   const [inputValue, setInputValue] = useState(String(value));
   const [isEditing, setIsEditing] = useState(false);
@@ -82,14 +53,9 @@ function ParameterSlider({
   return (
     <div className="mb-5">
       <div className="flex justify-between items-baseline mb-1.5">
-        <div className="flex items-center">
-          <label className="text-sm font-medium text-zinc-200">
-            {param.label}
-          </label>
-          {sensitivity !== undefined && sensitivityDirection && (
-            <SensitivityBadge sensitivity={sensitivity} direction={sensitivityDirection} />
-          )}
-        </div>
+        <label className="text-sm font-medium text-zinc-200">
+          {param.label}
+        </label>
         <input
           type="text"
           value={isEditing ? inputValue : formatValue(param, value)}
@@ -208,16 +174,6 @@ const TAB_CONFIG: { id: ParamTab; label: string; icon: string; color: string; de
 export function ParameterControls({ values, onChange, onReset }: ParameterControlsProps) {
   const [activeTab, setActiveTab] = useState<ParamTab>('compute');
   
-  // Calculate sensitivity for all parameters
-  const sensitivityMap = useMemo(() => {
-    const analysis = calculateSensitivities(values, values.year);
-    const map: Record<string, { sensitivity: number; direction: 'positive' | 'negative' | 'neutral' }> = {};
-    for (const s of analysis.sensitivities) {
-      map[s.parameterId] = { sensitivity: s.sensitivity, direction: s.direction };
-    }
-    return map;
-  }, [values]);
-  
   // Group parameters by category (exclude 'year' - it has its own slider above tabs)
   const computeParams = parameters.filter(p => p.group === 'compute' && p.id !== 'year');
   const economicParams = parameters.filter(p => p.group === 'economic');
@@ -287,19 +243,14 @@ export function ParameterControls({ values, onChange, onReset }: ParameterContro
       {/* Parameters for active tab */}
       <div className="min-h-[300px]">
         {activeTab !== 'tiers' ? (
-          activeParams.map(param => {
-            const sens = sensitivityMap[param.id];
-            return (
-              <ParameterSlider
-                key={param.id}
-                param={param}
-                value={values[param.id]}
-                onChange={(v) => onChange(param.id, v)}
-                sensitivity={sens?.sensitivity}
-                sensitivityDirection={sens?.direction}
-              />
-            );
-          })
+          activeParams.map(param => (
+            <ParameterSlider
+              key={param.id}
+              param={param}
+              value={values[param.id]}
+              onChange={(v) => onChange(param.id, v)}
+            />
+          ))
         ) : (
           // Special rendering for tiers - grouped by tier with colored headers
           <div className="space-y-4">
@@ -335,18 +286,7 @@ export function ParameterControls({ values, onChange, onReset }: ParameterContro
         )}
       </div>
       
-      {/* Legend for sensitivity bars */}
-      <div className="mt-4 pt-4 border-t border-zinc-800 flex items-center gap-4 text-xs text-zinc-500">
-        <span>Sensitivity:</span>
-        <span className="flex items-center gap-1">
-          <div className="w-3 h-2 rounded-sm bg-emerald-500/70" /> ↑ human hrs
-        </span>
-        <span className="flex items-center gap-1">
-          <div className="w-3 h-2 rounded-sm bg-red-500/70" /> ↓ human hrs
-        </span>
-      </div>
-      
-      <div className="mt-3">
+      <div className="mt-4 pt-4 border-t border-zinc-800">
         <p className="text-xs text-zinc-600 leading-relaxed">
           Based on the economic framing from{' '}
           <a 

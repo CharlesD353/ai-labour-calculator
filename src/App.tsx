@@ -163,13 +163,13 @@ This makes raw compute capacity the binding constraint rather than cost or subst
 
 Key assumptions:
 • High demand elasticity (0.6)—strong Jevons paradox effect; cheaper AI → much more AI use
-• High new task creation (0.15)—AI enables personalized education, ubiquitous assistants, mass customization
+• High new task creation (0.8)—AI enables personalized education, ubiquitous assistants, mass customization
 • Higher baseline growth (4%/year)—AI-augmented economy grows faster
 
 In this world, total cognitive work hours might 2-3x even as AI does most of it. Humans may do fewer hours but remain employed because there's so much more work to do. Wages could remain stable even with high substitutability.`,
       changes: {
         demandElasticity: 0.6,
-        newTaskCreationRate: 0.15,
+        newTaskCreationRate: 0.8,
         baselineDemandGrowth: 0.04,
       },
     },
@@ -698,10 +698,10 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
                 
                 <p>
                   <strong className="text-emerald-400">New Task Creation:</strong> AI enables entirely new categories 
-                  of work that were previously impossible or uneconomical.
+                  of work that were previously impossible or uneconomical. Plateaus when σ plateaus.
                 </p>
                 <div className="bg-zinc-800/50 rounded p-2 my-2 font-mono text-xs">
-                  multiplier = 1 + (rate × σ_growth × years)
+                  multiplier = 1 + (rate × σ_growth)
                 </div>
                 <p className="text-zinc-400 text-xs mb-2">
                   <strong>Example:</strong> If avg σ grows from 0.30→0.55 over 6 years (growth=0.25), 
@@ -1072,12 +1072,12 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
                   </p>
                 </div>
                 <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
-                  <p className="text-zinc-300 font-medium mb-1">New Task Creation <span className="text-zinc-500 font-normal">(unit: ratio, 0-0.5)</span></p>
+                  <p className="text-zinc-300 font-medium mb-1">New Task Creation <span className="text-zinc-500 font-normal">(unit: ratio, 0-1.0)</span></p>
                   <p>
-                    <strong>Formula:</strong> new work multiplier = 1 + (rate × σ_growth × years)
+                    <strong>Formula:</strong> new work multiplier = 1 + (rate × σ_growth)
                   </p>
                   <p className="mt-1">
-                    <strong>At rate=0.1:</strong> If σ grows 0.25 over 6 years → 15% more cognitive work exists (personalized tutoring, AI assistants).
+                    <strong>At rate=0.5:</strong> If σ grows from 10%→85% (0.75 growth) → 37% more cognitive work exists (personalized tutoring, AI assistants).
                   </p>
                   <p className="mt-1">
                     <strong>At rate=0:</strong> AI only redistributes existing work, no new categories.
@@ -1356,8 +1356,8 @@ effective = raw × Π[y=0 to t-1] efficiency(y)`}
    costReductionFactor = max(0.01, 1 - effectiveCostReduction)
    aiInduced = 1 + elasticity × log₁₀(1 / costReductionFactor)
 
-3. New Task Creation:
-   newTasks = 1 + rate × σ_growth × years
+3. New Task Creation (plateaus when σ plateaus):
+   newTasks = 1 + rate × σ_growth
 
 Total Hours = baseHours × baseline × aiInduced × newTasks`}
                 </pre>

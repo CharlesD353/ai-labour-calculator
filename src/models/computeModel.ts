@@ -354,7 +354,8 @@ function calculateCognitiveWorkDemand(
   
   // 3. New task creation: AI capabilities enable work that wasn't possible before
   // Tied to σ growth - as AI becomes more capable, new use cases emerge
-  const newTaskMultiplier = 1 + newTaskCreationRate * substitutabilityGrowth * yearsFromBase;
+  // Plateaus when σ plateaus (no longer multiplied by years)
+  const newTaskMultiplier = 1 + newTaskCreationRate * substitutabilityGrowth;
   
   // Total cognitive work demand
   const totalHours = baseCognitiveHours * 

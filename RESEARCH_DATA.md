@@ -122,7 +122,7 @@ FRONTIER:  2% → 80%, midpoint 2035, steepness 0.8, lag 1yr
 // Demand dynamics
 BASELINE_DEMAND_GROWTH = 0.03      // 3%/year
 DEMAND_ELASTICITY = 0.5            // Log-based Jevons coefficient
-NEW_TASK_CREATION_RATE = 0.1       // 10% of σ growth → new work
+NEW_TASK_CREATION_RATE = 0.5       // 50% of σ growth → new work (plateaus when σ plateaus)
 
 // Labor (ILO/McKinsey)
 GLOBAL_WORKFORCE = 3.4e9           // 3.4 billion workers

@@ -88,7 +88,7 @@ Each task tier has independent parameters:
 |-----------|-------------|---------|
 | Baseline Demand Growth | Annual growth in work demand | 3%/year |
 | Demand Elasticity | How much demand rises as AI cost falls (log-based) | 0.5 |
-| New Task Creation | Rate AI enables entirely new work | 0.1 |
+| New Task Creation | Rate AI enables entirely new work (scales with σ growth) | 0.5 |
 
 ### Per-Tier Settings
 | Parameter | Description |

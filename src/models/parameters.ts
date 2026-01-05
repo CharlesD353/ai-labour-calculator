@@ -253,11 +253,11 @@ export const parameters: Parameter[] = [
   {
     id: 'newTaskCreationRate',
     label: 'New Task Creation',
-    description: 'Multiplier = 1 + (rate × σ_growth × years). σ = substitutability. At 0.1: if σ grows 0.25 over 6yr → 15% more work. At 0: no new work categories. At 0.3+: major new industries.',
-    default: 0.1, // 10% of σ growth translates to new tasks
+    description: 'Multiplier = 1 + (rate × σ_growth). At 0.5: if σ grows from 10%→85%, +37% more work. At 0: no new work categories. At 1.0: new work scales 1:1 with capability.',
+    default: 0.5, // 50% of σ growth translates to new tasks
     min: 0,
-    max: 0.5,
-    step: 0.05,
+    max: 1.0,
+    step: 0.1,
     unit: '',
     format: 'number',
     group: 'demand',
