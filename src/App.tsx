@@ -114,11 +114,11 @@ Key assumptions:
 
 This reflects views that transformative AI is imminent and that economic pressures will drive rapid automation regardless of social preferences. Human labor value could collapse within 10-15 years.`,
       changes: {
-        tier_routine_maxSigma: 0.99,
-        tier_standard_maxSigma: 0.97,
-        tier_complex_maxSigma: 0.95,
-        tier_expert_maxSigma: 0.90,
-        tier_frontier_maxSigma: 0.85,
+        tier_routine_maxSigma: 1,
+        tier_standard_maxSigma: 1,
+        tier_complex_maxSigma: 1,
+        tier_expert_maxSigma: 1,
+        tier_frontier_maxSigma: 1,
         tier_routine_sigmaMidpoint: 2025,
         tier_standard_sigmaMidpoint: 2026,
         tier_complex_sigmaMidpoint: 2027,
