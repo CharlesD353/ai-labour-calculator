@@ -239,7 +239,7 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
           {/* Hero */}
           <div className="text-center pb-4 border-b border-zinc-800">
             <h2 className="text-2xl font-bold text-zinc-100 mb-2">
-              Will AI Make Human labour Worthless?
+              Will AI Make Human Labour Worthless?
             </h2>
             <p className="text-zinc-400 max-w-2xl mx-auto">
               This calculator lets you explore different scenarios for how AI automation affects human wages and employment over time.
