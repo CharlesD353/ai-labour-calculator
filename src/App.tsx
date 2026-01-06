@@ -1928,13 +1928,13 @@ finalWage = min(rawWage, taskValue)`}
           <div>
             <h1 className="text-xl font-bold text-zinc-100">
               AI Labour Displacement Calculator{' '}
-              <span className="font-normal italic text-sm text-zinc-500">
+              <span className="font-normal italic text-sm text-zinc-600">
                 by{' '}
                 <a
                   href="https://x.com/CharlesD353"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-zinc-300 transition-colors"
+                  className="hover:text-zinc-400 transition-colors"
                 >
                   Charles Dillon
                 </a>
