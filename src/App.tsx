@@ -422,12 +422,6 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
       ),
     },
     {
-      id: 'summary',
-      label: 'Summary',
-      icon: '📊',
-      content: <SummaryPanel outputs={modelOutputs} params={params} />,
-    },
-    {
       id: 'charts',
       label: 'Charts',
       icon: '📈',
@@ -457,6 +451,12 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
           <SensitivityChart analysis={sensitivityAnalysis} />
         </div>
       ),
+    },
+    {
+      id: 'summary',
+      label: 'Summary',
+      icon: '📊',
+      content: <SummaryPanel outputs={modelOutputs} params={params} />,
     },
     {
       id: 'scenarios',
