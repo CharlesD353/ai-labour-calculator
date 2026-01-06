@@ -435,6 +435,7 @@ export const formatValue = (param: Parameter, value: number): string => {
     case 'currency':
       return `$${value.toFixed(0)}`;
     default:
-      return value.toFixed(param.step < 1 ? 1 : 0);
+      // Show 2 decimals for small steps (like σ with step 0.05), 1 decimal for medium steps, 0 for large
+      return value.toFixed(param.step < 0.1 ? 2 : param.step < 1 ? 1 : 0);
   }
 };
