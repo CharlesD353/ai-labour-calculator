@@ -340,8 +340,10 @@ function calculateCognitiveWorkDemand(
   demandElasticity: number,
   newTaskCreationRate: number,
   aiCostReduction: number,      // How much cheaper is AI now vs 2024 (0-1 scale)
-  substitutabilityGrowth: number // How much has σ multiplier grown from initial
-): { totalHours: number; components: DemandComponents } {
+  substitutabilityGrowth: number, // How much has σ multiplier grown from initial
+  taskTiers: TaskTier[],
+  tierSigmaArray: number[]
+): { totalHours: number; tierHours: number[]; components: DemandComponents } {
   
   // 1. Baseline growth from GDP/population (compound growth)
   const baselineMultiplier = Math.pow(1 + baselineDemandGrowth, yearsFromBase);
@@ -350,24 +352,39 @@ function calculateCognitiveWorkDemand(
   // If AI is 10x cheaper, and elasticity is 0.5, demand increases by ~3x
   // Use log scale for cost reduction effect
   const costReductionFactor = Math.max(0.01, 1 - aiCostReduction);
-  const aiInducedMultiplier = 1 + demandElasticity * Math.log10(1 / costReductionFactor);
+  const logCostReduction = Math.log10(1 / costReductionFactor);
+  
+  // Per-tier induced demand: only tiers where AI can substitute (σ) should get the boost.
+  // This avoids showing "AI-induced ×2" in scenarios where AI can't do much work.
+  const tierAiInducedMultipliers = taskTiers.map((_, i) => {
+    const sigma = tierSigmaArray[i] ?? 0;
+    const raw = 1 + demandElasticity * sigma * logCostReduction;
+    return Math.max(1, raw);
+  });
   
   // 3. New task creation: AI capabilities enable work that wasn't possible before
   // Tied to σ growth - as AI becomes more capable, new use cases emerge
   // Plateaus when σ plateaus (no longer multiplied by years)
   const newTaskMultiplier = 1 + newTaskCreationRate * substitutabilityGrowth;
   
-  // Total cognitive work demand
-  const totalHours = baseCognitiveHours * 
-    baselineMultiplier * 
-    Math.max(1, aiInducedMultiplier) * 
-    newTaskMultiplier;
+  // Per-tier demand (baseline tier shares are treated as the 2024 starting distribution)
+  const tierHours = taskTiers.map((tier, i) => {
+    const baseTierHours = baseCognitiveHours * tier.shareOfCognitive;
+    return baseTierHours * baselineMultiplier * tierAiInducedMultipliers[i] * newTaskMultiplier;
+  });
+  
+  const totalHours = tierHours.reduce((sum, h) => sum + h, 0);
+  const effectiveAiInducedMultiplier = taskTiers.reduce(
+    (sum, tier, i) => sum + tier.shareOfCognitive * tierAiInducedMultipliers[i],
+    0
+  );
   
   return {
     totalHours,
+    tierHours,
     components: {
       baseline: baselineMultiplier,
-      aiInduced: Math.max(1, aiInducedMultiplier),
+      aiInduced: effectiveAiInducedMultiplier,
       newTasks: newTaskMultiplier,
     },
   };
@@ -463,93 +480,57 @@ interface TierEquilibriumResult {
 function calculateEquilibriumWages(
   tiers: TaskTier[],
   tierHoursNeeded: number[],     // Human hours needed per tier (after AI allocation)
-  baseCapacity: number[],        // Base human capacity per tier (humanCapable × total)
-  aiSharePerTier: number[],      // AI share for each tier (for displacement calc)
+  actualSupply: number[],        // Actual worker-hours available per tier (from skill-band allocation)
+  _aiSharePerTier: number[],     // Kept for API compatibility
   wageFloor: number,
-  mobilityThreshold: number,
+  _mobilityThreshold: number,    // Kept for API compatibility but no longer used
   maxIterations: number = 20
 ): TierEquilibriumResult[] {
   const n = tiers.length;
   
   // Initialize with base wages (floor × multiplier)
   let wages = tiers.map(t => wageFloor * t.wageMultiplier);
-  let effectiveSupply = [...baseCapacity];
+  let effectiveSupply = [...actualSupply];
   let displacedInflow = new Array(n).fill(0);
   
   for (let iter = 0; iter < maxIterations; iter++) {
     const prevWages = [...wages];
     
-    // Step 1: Calculate displaced workers from each tier
-    // Workers are only displaced when there's a labor SURPLUS (more workers than jobs).
-    // If demand still exceeds supply (tightness > 1), AI is filling unmet demand,
-    // not replacing humans — so no displacement occurs.
-    const displacedWorkers = tiers.map((_, i) => {
-      // Surplus = base capacity minus hours actually needed
-      // Only positive when supply > demand (workers without jobs in this tier)
-      const surplus = baseCapacity[i] - tierHoursNeeded[i];
-      return Math.max(0, surplus);
-    });
-    
-    // Step 2: Flow displaced workers down to lower tiers
-    // Displaced workers from tier i flow to tier i-1, i-2, etc.
-    // They go to the highest tier they're capable of (which is any lower tier)
+    // NOTE: Displacement/inflow is no longer calculated here.
+    // With skill-stratified allocation, "flow down" is already handled during allocation.
+    // displacedInflow remains zero.
     displacedInflow = new Array(n).fill(0);
-    for (let i = n - 1; i >= 0; i--) {
-      const displaced = displacedWorkers[i];
-      if (displaced > 0) {
-        // Flow to all lower tiers proportionally
-        for (let j = i - 1; j >= 0; j--) {
-          // Workers flow to lower tiers based on wage attractiveness
-          // Higher wages attract more displaced workers
-          const tierWage = wages[j];
-          const attractiveness = tierWage / wages[i]; // Relative wage appeal
-          const inflowShare = Math.min(1, attractiveness) / (i); // Distribute across tiers
-          displacedInflow[j] += displaced * inflowShare;
-        }
-      }
-    }
     
-    // Step 3: Calculate voluntary mobility (workers substitute down if wages are higher below)
-    const voluntaryMobility = new Array(n).fill(0);
-    for (let i = n - 1; i > 0; i--) {
-      // Check if any lower tier pays enough to attract workers from tier i
-      for (let j = i - 1; j >= 0; j--) {
-        if (wages[j] > wages[i] * mobilityThreshold) {
-          // Some tier-i capable workers will move to tier-j
-          // Amount depends on how much higher the wage is
-          const wagePremium = (wages[j] / (wages[i] * mobilityThreshold)) - 1;
-          const mobilityRate = Math.min(0.3, wagePremium * 0.5); // Cap at 30%
-          const moversHours = baseCapacity[i] * (1 - aiSharePerTier[i]) * mobilityRate;
-          voluntaryMobility[j] += moversHours;
-        }
-      }
-    }
+    // Effective supply comes from the allocation (actual hours + unemployed workers who could work this tier)
+    effectiveSupply = [...actualSupply];
     
-    // Step 4: Update effective supply = base capacity + displaced inflow + voluntary inflow
-    // Note: Workers moving down reduce capacity at their original tier
-    effectiveSupply = baseCapacity.map((base, i) => {
-      // Base capacity for this tier (reduced by displacement)
-      const remaining = base * (1 - aiSharePerTier[i]);
-      // Plus inflows from above
-      return remaining + displacedInflow[i] + voluntaryMobility[i];
-    });
-    
-    // Step 5: Calculate labor market tightness and equilibrium wages
+    // Calculate labor market tightness and equilibrium wages
     wages = tiers.map((tier, i) => {
       const demand = tierHoursNeeded[i];
       const supply = Math.max(effectiveSupply[i], 1); // Avoid division by zero
       const tightness = demand / supply;
       
-      // Wage formula: baseWage × tightness^elasticity
       const baseWage = wageFloor * tier.wageMultiplier;
-      const rawWage = baseWage * Math.pow(Math.max(1, tightness), tier.wageElasticity);
       
-      // Cap at task value (wage ceiling)
-      return Math.min(rawWage, tier.taskValue);
+      // NEW: Allow wages to go both UP (shortage) and DOWN (surplus)
+      // But with bounds: floor at wageFloor, ceiling at taskValue
+      let rawWage: number;
+      if (tightness >= 1) {
+        // Shortage: wages rise with tightness^elasticity
+        rawWage = baseWage * Math.pow(tightness, tier.wageElasticity);
+      } else {
+        // Surplus: wages fall, but more slowly (sticky downward)
+        // At tightness=0.5, wage is ~75% of base; at tightness=0, wage is ~50% of base
+        // Formula: baseWage × (0.5 + 0.5 × tightness) when tightness < 1
+        rawWage = baseWage * (0.5 + 0.5 * tightness);
+      }
+      
+      // Bounds: floor at wageFloor, ceiling at taskValue
+      return Math.max(wageFloor, Math.min(rawWage, tier.taskValue));
     });
     
     // Check convergence
-    const maxDiff = Math.max(...wages.map((w, i) => Math.abs(w - prevWages[i]) / prevWages[i]));
+    const maxDiff = Math.max(...wages.map((w, i) => Math.abs(w - prevWages[i]) / Math.max(prevWages[i], 1)));
     if (maxDiff < 0.01) break; // 1% tolerance
   }
   
@@ -593,6 +574,7 @@ interface AllocationResult {
   productionCostPerFLOP: number;  // Base hardware cost
   scarcityPremium: number;        // market / production ratio
   clearingTier: string | null;    // Which tier set the price
+  actualSupplyPerTier: number[];  // Actual worker-hours available for each tier (for tightness calc)
 }
 
 /**
@@ -775,6 +757,26 @@ function allocateComputeOptimally(
     lpResult[`human_${tv.tier.id}`] = humanAllocation.get(tv.tier.id) ?? 0;
   }
   
+  // Compute ACTUAL SUPPLY for each tier (for proper tightness calculation)
+  // Supply = hours actually allocated + unemployed hours from workers who COULD work this tier
+  // This gives us realistic tightness: demand / actualSupply
+  const actualSupplyPerTier: number[] = tierValues.map((tv) => {
+    const actualTierIdx = tierOrder.indexOf(tv.tier.id);
+    const hoursAllocated = humanAllocation.get(tv.tier.id) ?? 0;
+    
+    // Add unemployed hours from skill bands that could work this tier
+    // A band can work this tier if band.maxTierIndex >= actualTierIdx
+    let unemployedHoursForTier = 0;
+    for (let bandIdx = 0; bandIdx < skillBands.length; bandIdx++) {
+      const band = skillBands[bandIdx];
+      if (band.maxTierIndex >= actualTierIdx) {
+        unemployedHoursForTier += bandRemainingHours[bandIdx];
+      }
+    }
+    
+    return hoursAllocated + unemployedHoursForTier;
+  });
+  
   // For backward compatibility, track global constraint binding
   const globalHumanCapacityBinding = skillConstraintBinding;
   
@@ -863,6 +865,7 @@ function allocateComputeOptimally(
     productionCostPerFLOP,
     scarcityPremium,
     clearingTier,
+    actualSupplyPerTier,
   };
 }
 
@@ -936,8 +939,6 @@ function solveYearJointEquilibrium(
   maxIterations: number = 20,
   wageTolerance: number = 0.01
 ): AllocationResult {
-  const baseCapacity = tiers.map(t => totalWorkforceHours * t.humanCapable);
-
   // Initialize with base wages (floor × multiplier)
   let wages = tiers.map(t => humanWageFloor * t.wageMultiplier);
 
@@ -964,7 +965,7 @@ function solveYearJointEquilibrium(
     const equilibriumResults = calculateEquilibriumWages(
       tiers,
       tierHoursNeeded,
-      baseCapacity,
+      allocationResult.actualSupplyPerTier,  // Use actual supply from skill-band allocation
       aiSharePerTier,
       humanWageFloor,
       mobilityThreshold
@@ -1001,7 +1002,7 @@ function solveYearJointEquilibrium(
       const finalEquilibriumResults = calculateEquilibriumWages(
         tiers,
         finalTierHoursNeeded,
-        baseCapacity,
+        finalAllocationResult.actualSupplyPerTier,  // Use actual supply
         finalAiSharePerTier,
         humanWageFloor,
         mobilityThreshold
@@ -1041,7 +1042,7 @@ function solveYearJointEquilibrium(
   const finalEquilibriumResults = calculateEquilibriumWages(
     tiers,
     finalTierHoursNeeded,
-    baseCapacity,
+    finalAllocationResult.actualSupplyPerTier,  // Use actual supply
     finalAiSharePerTier,
     humanWageFloor,
     mobilityThreshold
@@ -1157,16 +1158,16 @@ export function runModel(params: ParameterValues): ModelOutputs {
       params.demandElasticity ?? 0.5,
       params.newTaskCreationRate ?? 0.1,
       effectiveCostReduction,
-      substitutabilityGrowth
+      substitutabilityGrowth,
+      taskTiers,
+      tierSigmaArray
     );
     
     const totalCognitiveWorkHours = demandResult.totalHours;
     const demandGrowthFromBaseline = (totalCognitiveWorkHours / baseCognitiveHours) - 1;
     
-    // Calculate hours per tier based on total demand and tier shares
-    const tierHoursArray = taskTiers.map(tier => 
-      totalCognitiveWorkHours * tier.shareOfCognitive
-    );
+    // Calculate hours per tier from per-tier demand multipliers
+    const tierHoursArray = demandResult.tierHours;
     
     // Jointly clear compute and labor markets: wages affect compute bids, and AI allocation affects wages.
     const mobilityThreshold = params.mobilityThreshold ?? 0.8;

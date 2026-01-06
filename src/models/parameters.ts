@@ -39,7 +39,7 @@ export interface TierConfig {
 export const TIER_CONFIGS: TierConfig[] = [
   // Routine: multiple model calls per "hour of work", context handling, verification
   // +3 OOM from original to reflect realistic inference costs
-  { id: 'routine', name: 'Routine', color: '#22c55e', defaultFlops: 15, defaultShare: 0.25, 
+  { id: 'routine', name: 'Routine', color: '#22c55e', defaultFlops: 16, defaultShare: 0.25, 
     initialSigma: 0.10, maxSigma: 1.0, sigmaMidpoint: 2026, sigmaSteepness: 2, deploymentLag: 2,
     humanCapable: 1.00, wageMultiplier: 1.0,  // 100% can do Routine (20% exclusive Routine-only band)
     taskValue: 30, wageElasticity: 0.3,
@@ -47,14 +47,14 @@ export const TIER_CONFIGS: TierConfig[] = [
   // Standard: extended reasoning chains, larger contexts
   // +3 OOM from original
   { id: 'standard', name: 'Standard', color: '#3b82f6', defaultFlops: 17, defaultShare: 0.35, 
-    initialSigma: 0.10, maxSigma: 0.98, sigmaMidpoint: 2027, sigmaSteepness: 1.5, deploymentLag: 2,
+    initialSigma: 0.10, maxSigma: 1, sigmaMidpoint: 2027, sigmaSteepness: 1.5, deploymentLag: 2,
     humanCapable: 0.80, wageMultiplier: 1.5,  // 80% can do Standard+ (30% exclusive Standard-max band)
     taskValue: 60, wageElasticity: 0.5,
     description: 'Document summarization, code review, data analysis' },
   // Complex: multi-step analysis, iteration, verification loops
   // +2 OOM from original
   { id: 'complex', name: 'Complex', color: '#a855f7', defaultFlops: 18, defaultShare: 0.25, 
-    initialSigma: 0.05, maxSigma: 0.95, sigmaMidpoint: 2029, sigmaSteepness: 1.2, deploymentLag: 2,
+    initialSigma: 0.05, maxSigma: 0.9, sigmaMidpoint: 2029, sigmaSteepness: 1.2, deploymentLag: 2,
     humanCapable: 0.50, wageMultiplier: 2,    // 50% can do Complex+ (30% exclusive Complex-max band)
     taskValue: 150, wageElasticity: 0.8,
     description: 'Multi-step research, strategic planning' },

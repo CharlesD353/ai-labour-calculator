@@ -428,30 +428,6 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
       content: <SummaryPanel outputs={modelOutputs} params={params} />,
     },
     {
-      id: 'compute-costs',
-      label: 'Compute Costs',
-      icon: '💰',
-      content: targetProjection && (
-        <ComputeCostTab projection={targetProjection} params={params} />
-      ),
-    },
-    {
-      id: 'tiers',
-      label: 'Task Tiers',
-      icon: '📋',
-      content: targetProjection && (
-        <div className="bg-[#12121a] rounded-xl p-5 border border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-100 mb-4">
-            Task Tier Breakdown for {params.year}
-          </h3>
-          <TierBreakdown 
-            tierAllocations={targetProjection.tierAllocations}
-            year={params.year}
-          />
-        </div>
-      ),
-    },
-    {
       id: 'charts',
       label: 'Charts',
       icon: '📈',
@@ -482,6 +458,123 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
         </div>
       ),
     },
+    {
+      id: 'scenarios',
+      label: 'Scenarios',
+      icon: '🎯',
+      content: (
+        <div className="bg-[#12121a] rounded-xl p-5 border border-zinc-800 space-y-6">
+          <div>
+            <h3 className="text-lg text-zinc-100 mb-2">Scenario Presets</h3>
+            <p className="text-sm text-zinc-400">
+              Click a scenario to load a preset configuration. Base compute (10^{params.baseComputeExponent} FLOP/s) stays the same—only other parameters change.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {scenarios.map((scenario) => {
+              const colorClasses: Record<string, { bg: string; border: string; text: string; hover: string }> = {
+                emerald: { bg: 'bg-emerald-950/30', border: 'border-emerald-900/50', text: 'text-emerald-400', hover: 'hover:border-emerald-700' },
+                red: { bg: 'bg-red-950/30', border: 'border-red-900/50', text: 'text-red-400', hover: 'hover:border-red-700' },
+                amber: { bg: 'bg-amber-950/30', border: 'border-amber-900/50', text: 'text-amber-400', hover: 'hover:border-amber-700' },
+                blue: { bg: 'bg-blue-950/30', border: 'border-blue-900/50', text: 'text-blue-400', hover: 'hover:border-blue-700' },
+                zinc: { bg: 'bg-zinc-900/50', border: 'border-zinc-700/50', text: 'text-zinc-300', hover: 'hover:border-zinc-600' },
+              };
+              const colors = colorClasses[scenario.color] || colorClasses.zinc;
+              
+              return (
+                <div key={scenario.id} className={`${colors.bg} ${colors.border} border rounded-lg overflow-hidden`}>
+                  <button
+                    onClick={() => applyScenario(scenario.id)}
+                    className={`w-full p-4 text-left ${colors.hover} transition-all cursor-pointer`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`${colors.text} text-lg mb-1`}>{scenario.name}</p>
+                        <p className="text-sm text-zinc-400">{scenario.description}</p>
+                      </div>
+                      <span className="text-xs text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded ml-4 whitespace-nowrap">
+                        Apply →
+                      </span>
+                    </div>
+                  </button>
+                  <Collapsible title="See full explanation" defaultOpen={false}>
+                    <div className="px-4 pb-4 text-sm text-zinc-400 whitespace-pre-line">
+                      {scenario.explanation}
+                      <div className="mt-4 pt-3 border-t border-zinc-800/50">
+                        <p className="text-xs text-zinc-300 mb-2">Key parameters:</p>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono">
+                          {Object.entries(scenario.changes).map(([key, value]) => {
+                            const displayKey = key
+                              .replace('tier_', '')
+                              .replace(/_/g, ' ')
+                              .replace('flops', 'FLOPs')
+                              .replace('maxSigma', 'max σ')
+                              .replace('sigmaMidpoint', 'σ midpoint')
+                              .replace('sigmaSteepness', 'σ steepness');
+                            const displayValue = key.includes('Sigma') 
+                              ? `${((value as number) * 100).toFixed(0)}%`
+                              : key.includes('Rate') || key.includes('Growth') || key.includes('Elasticity') || key.includes('Decay')
+                              ? `${((value as number) * 100).toFixed(0)}%`
+                              : key.includes('flops')
+                              ? `10^${value}`
+                              : key.includes('HalfLife')
+                              ? `${value} yrs`
+                              : key.includes('Improvement')
+                              ? `${value}×/yr`
+                              : String(value);
+                            return (
+                              <div key={key} className="flex justify-between">
+                                <span className="text-zinc-500">{displayKey}:</span>
+                                <span className="text-zinc-300">{displayValue}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </Collapsible>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-zinc-800 pt-4">
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors"
+            >
+              Reset to Defaults
+            </button>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'compute-costs',
+      label: 'Compute Costs',
+      icon: '💰',
+      content: targetProjection && (
+        <ComputeCostTab projection={targetProjection} params={params} />
+      ),
+    },
+    {
+      id: 'tiers',
+      label: 'Task Tiers',
+      icon: '📋',
+      content: targetProjection && (
+        <div className="bg-[#12121a] rounded-xl p-5 border border-zinc-800">
+          <h3 className="text-lg font-semibold text-zinc-100 mb-4">
+            Task Tier Breakdown for {params.year}
+          </h3>
+          <TierBreakdown 
+            tierAllocations={targetProjection.tierAllocations}
+            year={params.year}
+          />
+        </div>
+      ),
+    },
+    
     {
       id: 'model',
       label: 'Model Info',
@@ -1100,98 +1193,6 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'scenarios',
-      label: 'Scenarios',
-      icon: '🎯',
-      content: (
-        <div className="bg-[#12121a] rounded-xl p-5 border border-zinc-800 space-y-6">
-          <div>
-            <h3 className="text-lg text-zinc-100 mb-2">Scenario Presets</h3>
-            <p className="text-sm text-zinc-400">
-              Click a scenario to load a preset configuration. Base compute (10^{params.baseComputeExponent} FLOP/s) stays the same—only other parameters change.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {scenarios.map((scenario) => {
-              const colorClasses: Record<string, { bg: string; border: string; text: string; hover: string }> = {
-                emerald: { bg: 'bg-emerald-950/30', border: 'border-emerald-900/50', text: 'text-emerald-400', hover: 'hover:border-emerald-700' },
-                red: { bg: 'bg-red-950/30', border: 'border-red-900/50', text: 'text-red-400', hover: 'hover:border-red-700' },
-                amber: { bg: 'bg-amber-950/30', border: 'border-amber-900/50', text: 'text-amber-400', hover: 'hover:border-amber-700' },
-                blue: { bg: 'bg-blue-950/30', border: 'border-blue-900/50', text: 'text-blue-400', hover: 'hover:border-blue-700' },
-                zinc: { bg: 'bg-zinc-900/50', border: 'border-zinc-700/50', text: 'text-zinc-300', hover: 'hover:border-zinc-600' },
-              };
-              const colors = colorClasses[scenario.color] || colorClasses.zinc;
-              
-              return (
-                <div key={scenario.id} className={`${colors.bg} ${colors.border} border rounded-lg overflow-hidden`}>
-                  <button
-                    onClick={() => applyScenario(scenario.id)}
-                    className={`w-full p-4 text-left ${colors.hover} transition-all cursor-pointer`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className={`${colors.text} text-lg mb-1`}>{scenario.name}</p>
-                        <p className="text-sm text-zinc-400">{scenario.description}</p>
-                      </div>
-                      <span className="text-xs text-zinc-500 bg-zinc-800/50 px-2 py-1 rounded ml-4 whitespace-nowrap">
-                        Apply →
-                      </span>
-                    </div>
-                  </button>
-                  <Collapsible title="See full explanation" defaultOpen={false}>
-                    <div className="px-4 pb-4 text-sm text-zinc-400 whitespace-pre-line">
-                      {scenario.explanation}
-                      <div className="mt-4 pt-3 border-t border-zinc-800/50">
-                        <p className="text-xs text-zinc-300 mb-2">Key parameters:</p>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono">
-                          {Object.entries(scenario.changes).map(([key, value]) => {
-                            const displayKey = key
-                              .replace('tier_', '')
-                              .replace(/_/g, ' ')
-                              .replace('flops', 'FLOPs')
-                              .replace('maxSigma', 'max σ')
-                              .replace('sigmaMidpoint', 'σ midpoint')
-                              .replace('sigmaSteepness', 'σ steepness');
-                            const displayValue = key.includes('Sigma') 
-                              ? `${((value as number) * 100).toFixed(0)}%`
-                              : key.includes('Rate') || key.includes('Growth') || key.includes('Elasticity') || key.includes('Decay')
-                              ? `${((value as number) * 100).toFixed(0)}%`
-                              : key.includes('flops')
-                              ? `10^${value}`
-                              : key.includes('HalfLife')
-                              ? `${value} yrs`
-                              : key.includes('Improvement')
-                              ? `${value}×/yr`
-                              : String(value);
-                            return (
-                              <div key={key} className="flex justify-between">
-                                <span className="text-zinc-500">{displayKey}:</span>
-                                <span className="text-zinc-300">{displayValue}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </Collapsible>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-zinc-800 pt-4">
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-sm transition-colors"
-            >
-              Reset to Defaults
-            </button>
           </div>
         </div>
       ),

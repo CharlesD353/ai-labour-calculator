@@ -116,15 +116,9 @@ export function TierBreakdown({ tierAllocations, year }: TierBreakdownProps) {
                 <span className="text-zinc-500 block">σ (sub)</span>
                 <span className="text-zinc-300">{ta.effectiveSubstitutability.toFixed(2)}</span>
               </div>
-              <div>
-                <span className="text-zinc-500 block">Human %</span>
+              <div title="Cumulative skill ceiling - % of workforce capable of this tier or higher">
+                <span className="text-zinc-500 block">Skill %</span>
                 <span className="text-zinc-300">{(ta.tier.humanCapable * 100).toFixed(0)}%</span>
-              </div>
-              <div>
-                <span className="text-zinc-500 block">Inflow</span>
-                <span className={`${ta.displacedInflow > 0 ? 'text-amber-400' : 'text-zinc-500'}`}>
-                  {ta.displacedInflow > 0 ? `+${formatHours(ta.displacedInflow)}` : '—'}
-                </span>
               </div>
               <div>
                 <span className="text-zinc-500 block">Binding</span>

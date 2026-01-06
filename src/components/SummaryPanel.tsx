@@ -31,6 +31,18 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
   const baselineHumanHours = baseline2024?.totalHumanHours ?? targetProjection.totalHumanHours;
   const humanHoursChange = ((targetProjection.totalHumanHours - baselineHumanHours) / baselineHumanHours) * 100;
   
+  // Build baseline wage lookup (from 2024 projection)
+  const baselineWageByTier: Record<string, number> = {};
+  baseline2024?.tierAllocations.forEach(ta => {
+    baselineWageByTier[ta.tier.id] = ta.tierWage;
+  });
+  
+  // Baseline average wage for comparison
+  const baselineAvgWage = baseline2024?.humanWageEquilibrium ?? targetProjection.humanWageEquilibrium;
+  const avgWageChange = ((targetProjection.humanWageEquilibrium - baselineAvgWage) / baselineAvgWage) * 100;
+  const avgWageArrow = avgWageChange > 2 ? '↑' : avgWageChange < -2 ? '↓' : '—';
+  const avgWageColor = avgWageChange > 2 ? 'text-emerald-400' : avgWageChange < -2 ? 'text-red-400' : 'text-zinc-400';
+  
   
   // Scarcity premium from model
   const scarcityPremium = targetProjection.scarcityPremium;
@@ -65,7 +77,7 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
         </div>
         <div className="grid grid-cols-3 gap-2 text-xs">
           <div className="text-center">
-            <div className="text-zinc-500">GDP</div>
+            <div className="text-zinc-500">Baseline GDP Growth</div>
             <div className="text-emerald-400">×{targetProjection.demandComponents.baseline.toFixed(2)}</div>
           </div>
           <div className="text-center">
@@ -114,8 +126,11 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">
             Avg Human Wage
           </p>
-          <p className="text-xl font-semibold text-emerald-400">
+          <p className={`text-xl font-semibold ${avgWageColor}`}>
             {formatCurrency(targetProjection.humanWageEquilibrium)}/hr
+          </p>
+          <p className={`text-xs ${avgWageColor}`}>
+            {avgWageArrow} {Math.abs(avgWageChange) > 2 ? `${avgWageChange > 0 ? '+' : ''}${avgWageChange.toFixed(0)}% vs 2024` : 'flat vs 2024'}
           </p>
         </div>
       </div>
@@ -151,7 +166,7 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
         <div className="flex items-center gap-2 text-[10px] text-zinc-600 mb-2 border-b border-zinc-800 pb-1">
           <span className="w-2"></span>
           <span className="w-14">Tier</span>
-          <span className="w-16" title="Human equilibrium wage for this tier">Wage</span>
+          <span className="w-20" title="Human equilibrium wage for this tier (vs 2024 baseline)">Wage</span>
           <span className="w-16" title="AI cost per hour for this tier">AI $/hr</span>
           <span className="w-14" title="Full-time equivalent jobs (2000 hrs/year)">Jobs</span>
           <span className="ml-auto" title="% of tier's work done by humans">Human</span>
@@ -160,6 +175,10 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
           {targetProjection.tierAllocations.map((ta) => {
             const ftes = ta.hoursHuman / 2000; // ~2000 hrs/year per FTE
             const aiCheaper = ta.aiCostPerHour < ta.tierWage;
+            const baselineWage = baselineWageByTier[ta.tier.id] ?? ta.tierWage;
+            const wageChange = ((ta.tierWage - baselineWage) / baselineWage) * 100;
+            const wageArrow = wageChange > 2 ? '↑' : wageChange < -2 ? '↓' : '—';
+            const wageColor = wageChange > 2 ? 'text-emerald-400' : wageChange < -2 ? 'text-red-400' : 'text-zinc-400';
             return (
               <div key={ta.tier.id} className="flex items-center gap-2 text-xs">
                 <div 
@@ -167,9 +186,14 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
                   style={{ backgroundColor: ta.tier.color }}
                 />
                 <span className="text-zinc-400 w-14">{ta.tier.name}</span>
-                <span className={`w-16 ${ta.wageAtCeiling ? 'text-amber-400' : 'text-emerald-400'}`}>
-                  {formatCurrency(ta.tierWage)}
-                  {ta.wageAtCeiling && <span className="ml-0.5" title="Wage hit task value ceiling">⚠</span>}
+                <span className="w-20 flex flex-col" title={`Baseline: ${formatCurrency(baselineWage)}`}>
+                  <span className={ta.wageAtCeiling ? 'text-amber-400' : wageColor}>
+                    {formatCurrency(ta.tierWage)}
+                    {ta.wageAtCeiling && <span className="ml-0.5" title="Wage hit task value ceiling">⚠</span>}
+                  </span>
+                  <span className={`text-[9px] ${wageColor}`}>
+                    {wageArrow} {Math.abs(wageChange) > 2 ? `${wageChange > 0 ? '+' : ''}${wageChange.toFixed(0)}%` : 'flat'}
+                  </span>
                 </span>
                 <span className={`w-16 ${aiCheaper ? 'text-amber-400' : 'text-red-400'}`} title={aiCheaper ? 'AI is cheaper' : 'AI is more expensive than humans'}>
                   {formatCurrency(ta.aiCostPerHour)}
@@ -300,15 +324,22 @@ export function SummaryPanel({ outputs, params }: SummaryPanelProps) {
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-sm text-zinc-400">Overall AI Task Share</span>
-          <span className="text-sm font-medium text-zinc-200">
+          <span className="text-sm font-medium text-emerald-400">
             {(targetProjection.aiTaskShare * 100).toFixed(1)}%
           </span>
         </div>
         
         <div className="flex justify-between items-center">
           <span className="text-sm text-zinc-400">Overall Human Task Share</span>
-          <span className="text-sm font-medium text-zinc-200">
+          <span className="text-sm font-medium text-blue-400">
             {(targetProjection.humanTaskShare * 100).toFixed(1)}%
+          </span>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-zinc-400">Unmet Demand</span>
+          <span className="text-sm font-medium text-red-400">
+            {((1 - targetProjection.aiTaskShare - targetProjection.humanTaskShare) * 100).toFixed(1)}%
           </span>
         </div>
         
