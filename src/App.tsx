@@ -1657,16 +1657,16 @@ finalWage = min(rawWage, taskValue)`}
       <footer className="border-t border-zinc-800 py-6">
         <div className="max-w-7xl mx-auto px-4 text-center text-xs text-zinc-600 space-y-2">
           <p>
-            Built to explore the{' '}
+            Built to explore a discussion between{' '}
             <a 
               href="https://x.com/CharlesD353/status/2005592245232452079" 
               className="text-indigo-400 hover:text-indigo-300"
               target="_blank"
               rel="noopener"
             >
-              CharlesD ↔ Seb Krier discussion
+              CharlesD and Seb Krier on Twitter
             </a>{' '}
-            on AGI and labor economics.
+            {' '}on AGI and labour economics.
           </p>
           <p className="text-zinc-500">
             Thanks to Claude Opus 4.5 for doing most of the research legwork and virtually all of the coding, 
