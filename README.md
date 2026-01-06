@@ -17,7 +17,7 @@ This calculator lets you adjust assumptions and see how they affect human wages,
 - **Tiered Task Model:** Cognitive work split into 5 difficulty tiers (Routine → Frontier), each with independent parameters
 - **Time-Varying Substitutability:** Per-tier σ that grows from initial value toward an asymptote over time
 - **Dynamic Demand:** Total work grows with GDP, AI-induced demand (Jevons paradox), and new task creation
-- **Human Capacity Constraints:** Per-tier limits on what fraction of the workforce can perform each task type
+- **Skill-Stratified Labor:** Workers have skill ceilings—they can only work at or below their skill level. Routine-only workers can't do Expert tasks even if Expert pays more.
 - **Equilibrium Wages:** Market-clearing wages per tier based on supply/demand with inter-tier mobility
 - **Market-Clearing Allocation:** Uniform-price auction allocates scarce compute to highest bidders
 

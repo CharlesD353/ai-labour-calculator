@@ -41,35 +41,35 @@ export const TIER_CONFIGS: TierConfig[] = [
   // +3 OOM from original to reflect realistic inference costs
   { id: 'routine', name: 'Routine', color: '#22c55e', defaultFlops: 15, defaultShare: 0.25, 
     initialSigma: 0.10, maxSigma: 1.0, sigmaMidpoint: 2026, sigmaSteepness: 2, deploymentLag: 2,
-    humanCapable: 0.90, wageMultiplier: 1.0, 
+    humanCapable: 1.00, wageMultiplier: 1.0,  // 100% can do Routine (20% exclusive Routine-only band)
     taskValue: 30, wageElasticity: 0.3,
     description: 'Email drafts, simple lookups, form filling' },
   // Standard: extended reasoning chains, larger contexts
   // +3 OOM from original
   { id: 'standard', name: 'Standard', color: '#3b82f6', defaultFlops: 17, defaultShare: 0.35, 
     initialSigma: 0.10, maxSigma: 0.98, sigmaMidpoint: 2027, sigmaSteepness: 1.5, deploymentLag: 2,
-    humanCapable: 0.65, wageMultiplier: 1.5,
+    humanCapable: 0.80, wageMultiplier: 1.5,  // 80% can do Standard+ (30% exclusive Standard-max band)
     taskValue: 60, wageElasticity: 0.5,
     description: 'Document summarization, code review, data analysis' },
   // Complex: multi-step analysis, iteration, verification loops
   // +2 OOM from original
   { id: 'complex', name: 'Complex', color: '#a855f7', defaultFlops: 18, defaultShare: 0.25, 
     initialSigma: 0.05, maxSigma: 0.95, sigmaMidpoint: 2029, sigmaSteepness: 1.2, deploymentLag: 2,
-    humanCapable: 0.35, wageMultiplier: 2,
+    humanCapable: 0.50, wageMultiplier: 2,    // 50% can do Complex+ (30% exclusive Complex-max band)
     taskValue: 150, wageElasticity: 0.8,
     description: 'Multi-step research, strategic planning' },
   // Expert: sophisticated reasoning, frontier model capability
   // +1 OOM from original
   { id: 'expert', name: 'Expert', color: '#f97316', defaultFlops: 19, defaultShare: 0.12, 
     initialSigma: 0.05, maxSigma: 0.90, sigmaMidpoint: 2032, sigmaSteepness: 1.0, deploymentLag: 1,
-    humanCapable: 0.12, wageMultiplier: 3.0,
+    humanCapable: 0.20, wageMultiplier: 3.0,  // 20% can do Expert+ (15% exclusive Expert-max band)
     taskValue: 400, wageElasticity: 1.2,
     description: 'Novel research, high-stakes decisions' },
   // Frontier: cutting-edge capability, beyond current SOTA
   // +1 OOM from original
   { id: 'frontier', name: 'Frontier', color: '#ef4444', defaultFlops: 21, defaultShare: 0.03, 
     initialSigma: 0.02, maxSigma: 0.80, sigmaMidpoint: 2035, sigmaSteepness: 0.8, deploymentLag: 1,
-    humanCapable: 0.03, wageMultiplier: 6.0,
+    humanCapable: 0.05, wageMultiplier: 6.0,  // 5% can do Frontier (5% exclusive Frontier-max band)
     taskValue: 1000, wageElasticity: 1.5,
     description: 'Breakthrough innovation, trust-critical' },
 ];

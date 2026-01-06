@@ -129,6 +129,24 @@ GLOBAL_WORKFORCE = 3.4e9           // 3.4 billion workers
 HOURS_PER_WORKER = 1800            // ~1,800 hours/year
 COGNITIVE_SHARE = 0.40             // 40% of work is cognitive
 // → ~2.4 trillion cognitive hours/year (global human capacity constraint)
+
+// Skill-stratified labor supply (cumulative % who can do this tier OR HIGHER)
+ROUTINE_CAPABLE:  100% // Everyone in cognitive workforce can do Routine
+STANDARD_CAPABLE: 80%  // 80% can do Standard or higher
+COMPLEX_CAPABLE:  50%  // 50% can do Complex or higher
+EXPERT_CAPABLE:   20%  // 20% can do Expert or higher
+FRONTIER_CAPABLE: 5%   // Only 5% can do Frontier
+
+// Derived exclusive skill bands (can do THIS tier but NOT higher):
+// Routine-only: 20% (100% - 80%) - these workers can ONLY do Routine tasks
+// Standard-max: 30% (80% - 50%)  - can do Routine or Standard
+// Complex-max:  30% (50% - 20%)  - can do up to Complex
+// Expert-max:   15% (20% - 5%)   - can do up to Expert
+// Frontier-max: 5%               - can do all tiers (most flexible)
+//
+// Workers are allocated from highest skill band first (most flexibility).
+// Routine-only workers (20%) can ONLY work Routine - if that tier is automated,
+// they have no fallback options.
 ```
 
 ### References

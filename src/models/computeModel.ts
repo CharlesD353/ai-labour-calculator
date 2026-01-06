@@ -378,6 +378,67 @@ const SECONDS_PER_YEAR = 365.25 * 24 * 3600;
 const AI_UTILIZATION = 0.3; // Fraction of compute capacity used for cognitive work
 
 /**
+ * Skill band represents workers whose MAXIMUM tier capability is a specific tier.
+ * 
+ * Example: If humanCapable values are Routine=90%, Standard=65%, Complex=35%, Expert=12%, Frontier=3%
+ * Then exclusive skill bands are:
+ * - Frontier-max: 3% (can work ALL tiers)
+ * - Expert-max: 12% - 3% = 9% (can work up to Expert)
+ * - Complex-max: 35% - 12% = 23% (can work up to Complex)
+ * - Standard-max: 65% - 35% = 30% (can work up to Standard)
+ * - Routine-only: 90% - 65% = 25% (can ONLY work Routine)
+ * 
+ * Workers in higher skill bands have MORE FLEXIBILITY in tier choice.
+ * Workers in lower skill bands have FEWER OPTIONS.
+ */
+interface SkillBand {
+  maxTierIndex: number;      // Highest tier index this band can work (0=routine, 4=frontier)
+  maxTierName: string;       // Name for display
+  fractionOfWorkforce: number; // Exclusive fraction (not cumulative)
+  totalHours: number;        // Total hours available from this band
+}
+
+/**
+ * Calculate exclusive skill bands from cumulative humanCapable values.
+ * 
+ * humanCapable is interpreted as "% of cognitive workforce that CAN do this tier"
+ * (cumulative - anyone who can do Expert can also do Complex, Standard, Routine)
+ */
+function calculateSkillBands(tiers: TaskTier[], totalWorkforceHours: number): SkillBand[] {
+  // Sort tiers by index (routine=0, frontier=4) - ascending order
+  const sortedTiers = [...tiers].sort((a, b) => {
+    const tierOrder = ['routine', 'standard', 'complex', 'expert', 'frontier'];
+    return tierOrder.indexOf(a.id) - tierOrder.indexOf(b.id);
+  });
+  
+  // humanCapable values (cumulative: higher tiers have lower values)
+  // e.g., [0.90, 0.65, 0.35, 0.12, 0.03]
+  const cumulativeCapable = sortedTiers.map(t => t.humanCapable);
+  
+  // Convert to exclusive bands (each band = this tier's capable minus next higher tier's capable)
+  const bands: SkillBand[] = [];
+  
+  for (let i = 0; i < sortedTiers.length; i++) {
+    const thisTierCapable = cumulativeCapable[i];
+    const nextHigherTierCapable = i < sortedTiers.length - 1 ? cumulativeCapable[i + 1] : 0;
+    
+    // Exclusive fraction = can do this tier but NOT the next higher tier
+    const exclusiveFraction = thisTierCapable - nextHigherTierCapable;
+    
+    if (exclusiveFraction > 0.001) { // Skip negligible bands
+      bands.push({
+        maxTierIndex: i,
+        maxTierName: sortedTiers[i].name,
+        fractionOfWorkforce: exclusiveFraction,
+        totalHours: totalWorkforceHours * exclusiveFraction,
+      });
+    }
+  }
+  
+  return bands;
+}
+
+/**
  * Equilibrium wage calculation result for a single tier
  */
 interface TierEquilibriumResult {
@@ -419,9 +480,14 @@ function calculateEquilibriumWages(
     const prevWages = [...wages];
     
     // Step 1: Calculate displaced workers from each tier
-    // Workers are displaced when AI automates their work
+    // Workers are only displaced when there's a labor SURPLUS (more workers than jobs).
+    // If demand still exceeds supply (tightness > 1), AI is filling unmet demand,
+    // not replacing humans — so no displacement occurs.
     const displacedWorkers = tiers.map((_, i) => {
-      return aiSharePerTier[i] * baseCapacity[i];
+      // Surplus = base capacity minus hours actually needed
+      // Only positive when supply > demand (workers without jobs in this tier)
+      const surplus = baseCapacity[i] - tierHoursNeeded[i];
+      return Math.max(0, surplus);
     });
     
     // Step 2: Flow displaced workers down to lower tiers
@@ -622,26 +688,95 @@ function allocateComputeOptimally(
     lpResult[`ai_${tv.tier.id}`] = alloc.aiHours;
   }
   
-  // Second pass: allocate humans with GLOBAL capacity constraint
-  // Sort by wage (highest first) - prioritize high-value work when humans are scarce
-  const sortedByWage = [...tierValues].sort((a, b) => b.tierWage - a.tierWage);
-  let remainingHumanHours = totalWorkforceHours; // Global human capacity
-  const globalHumanCapacityBinding: Set<string> = new Set(); // Track which tiers hit global cap
+  // Second pass: allocate humans with SKILL-STRATIFIED capacity constraint
+  // Workers can only work in tiers AT OR BELOW their skill level.
+  // Higher-skill workers are allocated first (they have more options and go to highest-paying accessible tier).
   
-  for (const tv of sortedByWage) {
+  // Calculate skill bands from humanCapable values
+  const skillBands = calculateSkillBands(tiers, totalWorkforceHours);
+  
+  // Track remaining hours per skill band
+  const bandRemainingHours = skillBands.map(b => b.totalHours);
+  
+  // Track remaining demand per tier
+  const tierOrder = ['routine', 'standard', 'complex', 'expert', 'frontier'];
+  const tierRemainingDemand: Map<string, number> = new Map();
+  for (const tv of tierValues) {
     const alloc = allocation.get(tv.tier.id) ?? { aiHours: 0, computeUsed: 0 };
-    // Humans fill remaining demand up to BOTH per-tier capacity AND global remaining capacity
-    const remainingDemand = tv.tierHours - alloc.aiHours;
-    const perTierCap = Math.min(remainingDemand, tv.humanCapacityHours);
-    const humanHoursForTier = Math.min(perTierCap, remainingHumanHours);
-    lpResult[`human_${tv.tier.id}`] = humanHoursForTier;
-    
-    // Track if this tier was constrained by global capacity (not per-tier)
-    if (humanHoursForTier < perTierCap && remainingHumanHours < perTierCap) {
-      globalHumanCapacityBinding.add(tv.tier.id);
-    }
-    remainingHumanHours -= humanHoursForTier;
+    tierRemainingDemand.set(tv.tier.id, tv.tierHours - alloc.aiHours);
   }
+  
+  // Track human allocation per tier
+  const humanAllocation: Map<string, number> = new Map();
+  for (const tv of tierValues) {
+    humanAllocation.set(tv.tier.id, 0);
+  }
+  
+  // Track which tiers hit skill constraints
+  const skillConstraintBinding: Set<string> = new Set();
+  
+  // Sort tiers by wage (highest first)
+  const sortedByWage = [...tierValues].sort((a, b) => b.tierWage - a.tierWage);
+  
+  // Process skill bands from HIGHEST skill to LOWEST
+  // Higher-skill workers get first pick of tiers, going to highest-paying tier they can access
+  for (let bandIdx = skillBands.length - 1; bandIdx >= 0; bandIdx--) {
+    const band = skillBands[bandIdx];
+    let bandHoursRemaining = bandRemainingHours[bandIdx];
+    
+    // This band can work tiers 0 through band.maxTierIndex
+    // Iterate through tiers by wage (highest first), allocating this band's workers
+    for (const tv of sortedByWage) {
+      const tierIdx = tierOrder.indexOf(tv.tier.id);
+      
+      // Can this skill band work in this tier?
+      if (tierIdx > band.maxTierIndex) {
+        continue; // This tier requires higher skill than this band has
+      }
+      
+      // How much demand remains in this tier?
+      const remainingDemand = tierRemainingDemand.get(tv.tier.id) ?? 0;
+      if (remainingDemand <= 0) continue;
+      
+      // Allocate what we can from this band
+      const hoursToAllocate = Math.min(remainingDemand, bandHoursRemaining);
+      if (hoursToAllocate > 0) {
+        humanAllocation.set(tv.tier.id, (humanAllocation.get(tv.tier.id) ?? 0) + hoursToAllocate);
+        tierRemainingDemand.set(tv.tier.id, remainingDemand - hoursToAllocate);
+        bandHoursRemaining -= hoursToAllocate;
+      }
+      
+      if (bandHoursRemaining <= 0) break; // This band is exhausted
+    }
+    
+    bandRemainingHours[bandIdx] = bandHoursRemaining;
+  }
+  
+  // Check which tiers are constrained by skill availability
+  // A tier is skill-constrained if there's remaining demand but all accessible skill bands are exhausted
+  for (const tv of tierValues) {
+    const tierIdx = tierOrder.indexOf(tv.tier.id);
+    const remainingDemand = tierRemainingDemand.get(tv.tier.id) ?? 0;
+    
+    if (remainingDemand > 0) {
+      // Check if any skill band that could serve this tier has hours left
+      const anyBandHasHours = skillBands.some((band, i) => 
+        band.maxTierIndex >= tierIdx && bandRemainingHours[i] > 0
+      );
+      
+      if (!anyBandHasHours) {
+        skillConstraintBinding.add(tv.tier.id);
+      }
+    }
+  }
+  
+  // Write human allocations to LP result
+  for (const tv of tierValues) {
+    lpResult[`human_${tv.tier.id}`] = humanAllocation.get(tv.tier.id) ?? 0;
+  }
+  
+  // For backward compatibility, track global constraint binding
+  const globalHumanCapacityBinding = skillConstraintBinding;
   
   // Market price is the clearing tier's reservation price
   // If compute is abundant (all tiers served), use production cost

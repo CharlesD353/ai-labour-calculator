@@ -906,22 +906,36 @@ This extends the timeline for AI disruption by 10-20 years. Humans have more tim
                   </p>
                 </div>
                 
-                <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
-                  <p className="text-zinc-300 font-medium mb-1">Human % <span className="text-zinc-500 font-normal">(unit: percentage, 1-100%)</span></p>
+                <div className="bg-amber-950/30 rounded-lg p-3 border border-amber-900/40">
+                  <p className="text-amber-300 font-medium mb-1">Human % (Skill-Stratified) <span className="text-zinc-500 font-normal">(unit: percentage, 1-100%)</span></p>
                   <p>
-                    <strong>Human capability bound</strong> — what fraction of the workforce is capable of performing this tier's tasks.
-                    Not everyone can do expert-level work.
+                    <strong>Cumulative skill capability</strong> — what fraction of the cognitive workforce CAN do this tier.
+                    These values are <em>cumulative</em>: anyone who can do Expert can also do Complex, Standard, and Routine.
                   </p>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li><strong className="text-zinc-300">Routine 90%</strong> — most workers can handle basic tasks</li>
-                    <li><strong className="text-zinc-300">Standard 65%</strong> — many workers can do knowledge work</li>
-                    <li><strong className="text-zinc-300">Complex 35%</strong> — fewer workers handle complex analysis</li>
-                    <li><strong className="text-zinc-300">Expert 12%</strong> — small fraction can do expert work</li>
-                    <li><strong className="text-zinc-300">Frontier 3%</strong> — very few can do breakthrough innovation</li>
+                  <p className="mt-2 text-zinc-400">
+                    <strong className="text-amber-400">Cumulative values:</strong>
+                  </p>
+                  <ul className="list-disc list-inside mt-1 space-y-1">
+                    <li><strong className="text-zinc-300">Routine 100%</strong> — everyone in cognitive workforce can do Routine</li>
+                    <li><strong className="text-zinc-300">Standard 80%</strong> — 80% can do Standard or higher</li>
+                    <li><strong className="text-zinc-300">Complex 50%</strong> — 50% can do Complex or higher</li>
+                    <li><strong className="text-zinc-300">Expert 20%</strong> — 20% can do Expert or higher</li>
+                    <li><strong className="text-zinc-300">Frontier 5%</strong> — only 5% can do Frontier</li>
                   </ul>
                   <p className="mt-2 text-zinc-400">
-                    If human capacity is insufficient for demand, AI must fill the gap (even if expensive), 
-                    triggering "Human Capacity" as the binding constraint.
+                    <strong className="text-amber-400">Exclusive skill bands (derived):</strong>
+                  </p>
+                  <ul className="list-disc list-inside mt-1 space-y-1">
+                    <li><strong className="text-zinc-300">Routine-only: 20%</strong> (100% - 80%) — can ONLY do Routine tasks</li>
+                    <li><strong className="text-zinc-300">Standard-max: 30%</strong> (80% - 50%) — can do Routine or Standard</li>
+                    <li><strong className="text-zinc-300">Complex-max: 30%</strong> (50% - 20%) — can do up to Complex</li>
+                    <li><strong className="text-zinc-300">Expert-max: 15%</strong> (20% - 5%) — can do up to Expert</li>
+                    <li><strong className="text-zinc-300">Frontier-max: 5%</strong> — can do all tiers</li>
+                  </ul>
+                  <p className="mt-2 text-zinc-400">
+                    <strong>Key implication:</strong> Workers can only work at or below their skill level. 
+                    Routine-only workers (20%) have NO other options if Routine work is automated.
+                    Higher-skill workers fill higher-paying tiers first, leaving lower tiers to those who can't do anything else.
                   </p>
                 </div>
                 
