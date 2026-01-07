@@ -69,8 +69,8 @@ function App() {
   // Scenario presets (keep baseComputeExponent the same across all)
   const scenarios = [
     {
-      id: 'optimistic',
-      name: 'Optimistic',
+      id: 'conservative',
+      name: 'Conservative',
       color: 'emerald',
       description: 'Low substitutability ceiling—AI assists but doesn\'t fully replace humans',
       explanation: `This scenario assumes AI hits fundamental limits in replacing human judgment, creativity, and social interaction. Even if AI becomes very capable at narrow tasks, it may never fully substitute for human work in most domains.
@@ -101,7 +101,7 @@ This reflects views that AGI is far off, or that even capable AI won't be truste
       },
     },
     {
-      id: 'pessimistic',
+      id: 'aggressive',
       name: 'High Substitutability',
       color: 'red',
       description: 'AI rapidly approaches near-perfect substitution across all tiers',
@@ -179,7 +179,7 @@ In this world, total cognitive work hours might 2-3x even as AI does most of it.
       name: 'Slow AI Progress',
       color: 'zinc',
       description: 'Algorithmic efficiency gains and cost declines slow down',
-      explanation: `This scenario assumes AI progress decelerates from current rates. Perhaps the low-hanging fruit has been picked, or scaling laws hit diminishing returns. AI still improves, but more slowly than optimists expect.
+      explanation: `This scenario assumes AI progress decelerates from current rates. Perhaps the low-hanging fruit has been picked, or scaling laws hit diminishing returns. AI still improves, but more slowly than conservatives expect.
 
 Key assumptions:
 • Efficiency gains drop to 1.3x/year (vs. 2x default)—algorithmic improvements slow
@@ -377,8 +377,8 @@ This is output from an interactive economic simulator that explores how AI autom
 The model finds equilibrium wages where labor supply meets demand, accounting for constraints like compute scarcity, AI costs, substitutability limits, and human workforce capacity.
 
 ### Key Debate
-- **Optimistic view**: Even if AI is cheaper per task, compute scarcity and substitutability limits may preserve human labor value
-- **Pessimistic view**: If AI costs fall faster than compute grows and substitutability approaches 100%, human labor could lose most economic value
+- **Conservative view**: Even if AI is cheaper per task, compute scarcity and substitutability limits may preserve human labour value
+- **Aggressive view**: If AI costs fall faster than compute grows and substitutability approaches 100%, human labour could lose most economic value
 
 ### Task Tiers
 ${modelOutputs.tiers.map(t => `- **${t.name}**: ${t.description} (${(t.shareOfCognitive*100).toFixed(0)}% of work, 10^${t.flopsPerHourExponent} FLOPs/hr, ${(t.humanCapable*100).toFixed(0)}% capable, ${t.wageMultiplier}× wage)`).join('\n')}
@@ -550,7 +550,7 @@ ${selectedYearTable}
 
 ---
 Generated from: AI Labour Displacement Calculator
-Model explores whether compute limitations preserve human labor value in an age of AI.`;
+Model explores whether compute limitations preserve human labour value in an age of AI.`;
   };
 
   const handleCopyOutput = async () => {
@@ -585,14 +585,14 @@ Model explores whether compute limitations preserve human labor value in an age 
           {/* The Debate */}
           <div className="grid md:grid-cols-2 gap-4">
             <div className="bg-emerald-950/20 rounded-lg p-4 border border-emerald-900/30">
-              <p className="text-emerald-400 mb-2">🟢 Optimistic View</p>
+              <p className="text-emerald-400 mb-2">🟢 Conservative View</p>
               <p className="text-sm text-zinc-400">
                 "Compute is limited. Even if AI is cheaper per task, there may not be enough compute to do all cognitive work. 
                 Humans could retain valuable niches."
               </p>
             </div>
             <div className="bg-red-950/20 rounded-lg p-4 border border-red-900/30">
-              <p className="text-red-400 mb-2">🔴 Pessimistic View</p>
+              <p className="text-red-400 mb-2">🔴 Aggressive View</p>
               <p className="text-sm text-zinc-400">
                 "AI is getting cheaper faster than compute is growing. If substitutability approaches 100%, 
                 human labour could lose most of its economic value."
@@ -691,7 +691,7 @@ Model explores whether compute limitations preserve human labor value in an age 
                 }}
                 className="bg-zinc-900/50 rounded p-3 border border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-950/20 transition-all text-left cursor-pointer"
               >
-                <p className="text-emerald-400">Optimist scenario</p>
+                <p className="text-emerald-400">Conservative scenario</p>
                 <p className="text-zinc-500">Set σ max to 0.6 for all task tiers. Human share stays high even in 2050.</p>
               </button>
               <button
@@ -718,7 +718,7 @@ Model explores whether compute limitations preserve human labor value in an age 
                 }}
                 className="bg-zinc-900/50 rounded p-3 border border-zinc-800 hover:border-red-500/50 hover:bg-red-950/20 transition-all text-left cursor-pointer"
               >
-                <p className="text-red-400">Pessimist scenario</p>
+                <p className="text-red-400">Aggressive scenario</p>
                 <p className="text-zinc-500">Set σ max to 1, midpoint to 2026, steepness to 3. Human wages and employment fall sharply.</p>
               </button>
               <button
