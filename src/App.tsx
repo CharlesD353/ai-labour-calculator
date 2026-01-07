@@ -954,6 +954,30 @@ Model explores whether compute limitations preserve human labour value in an age
               AND human capacity is sufficient. If skilled workers are scarce, AI fills the 
               gap even at higher cost. This produces realistic stratified automation.
             </p>
+            
+            {/* O-Ring / Task Separability Assumption */}
+            <div className="bg-rose-950/30 border border-rose-900/40 rounded-lg p-4 mt-4">
+              <h4 className="text-sm font-medium text-rose-300 mb-2">⚠️ Key Structural Assumption: Task Separability</h4>
+              <p className="text-xs text-zinc-400 mb-2">
+                This model assumes <strong className="text-zinc-300">additive separability</strong> across tiers: 
+                automating Routine tasks doesn't affect the value of Expert tasks. Output is a <em>sum</em> of tier outputs, 
+                not a <em>product</em>.
+              </p>
+              <p className="text-xs text-zinc-400 mb-2">
+                This contrasts with <strong className="text-zinc-300">"O-ring" production</strong> (Gans & Goldfarb, 2026), 
+                where tasks are quality complements and weak links matter. In an O-ring world:
+              </p>
+              <ul className="text-xs text-zinc-500 list-disc list-inside ml-1 space-y-1">
+                <li>Automating 90% of tasks could make the remaining 10% <em>more</em> valuable (the "focus effect")</li>
+                <li>Wages could <strong className="text-rose-400">rise</strong> under partial automation as humans become bottlenecks</li>
+                <li>Standard exposure indices (which sum task-level automation risks) would overstate displacement</li>
+              </ul>
+              <p className="text-xs text-zinc-500 mt-2">
+                If real production is more O-ring than additive, this model may be <strong className="text-amber-400">too pessimistic 
+                about human wages</strong> under partial automation. Separability is effectively a "conservative" assumption 
+                regarding labour displacement.
+              </p>
+            </div>
           </div>
           
           {/* Default sources */}
@@ -1546,6 +1570,52 @@ Model explores whether compute limitations preserve human labour value in an age
             <p className="text-sm text-zinc-400 mb-4">
               This page documents the exact formulas and algorithms used in the model, with worked numerical examples.
             </p>
+          </div>
+
+          {/* 0. Key Structural Assumption */}
+          <div className="border-t border-zinc-800 pt-4">
+            <h4 className="text-md font-semibold text-rose-400 mb-3">0. Key Structural Assumption: Task Separability</h4>
+            
+            <div className="space-y-3 text-sm text-zinc-400">
+              <div className="bg-rose-950/30 rounded-lg p-3 border border-rose-900/40">
+                <p className="text-rose-300 font-medium mb-2">Production Function: Additive, Not Multiplicative</p>
+                <pre className="bg-zinc-950 p-2 rounded text-xs text-emerald-400 overflow-x-auto">
+{`This model:    Y = Σ (tier outputs)     — Tasks are independent
+O-ring model:  Y = Π (task qualities)   — Tasks are complements`}
+                </pre>
+                <p className="text-xs mt-2">
+                  Automating Routine tasks in this model reduces Routine human labour but leaves Expert tasks unchanged. 
+                  The value of Expert work is <em>not</em> scaled by how much Routine work is automated.
+                </p>
+              </div>
+              
+              <div className="bg-zinc-900/50 rounded-lg p-3 border border-zinc-800">
+                <p className="text-zinc-300 font-medium mb-2">What This Excludes: The "Focus Effect"</p>
+                <p className="text-xs mb-2">
+                  Gans & Goldfarb (NBER Working Paper 34639, 2026) model automation under "O-ring" production 
+                  where tasks are quality complements. Under their model:
+                </p>
+                <ul className="list-disc list-inside text-xs space-y-1">
+                  <li><strong className="text-rose-400">Focus effect:</strong> When AI does grunt work, humans reallocate time to bottleneck tasks, raising their quality</li>
+                  <li><strong className="text-rose-400">Rising wages:</strong> Labour income can <em>rise</em> under partial automation because remaining tasks become more valuable</li>
+                  <li><strong className="text-rose-400">Bundled adoption:</strong> Automating task #1 can be unprofitable alone but profitable as part of a bundle</li>
+                </ul>
+              </div>
+              
+              <div className="bg-indigo-950/30 rounded-lg p-3 border border-indigo-900/40">
+                <p className="text-indigo-300 font-medium mb-2">📝 Implication for Results</p>
+                <p className="text-xs">
+                  If real-world production is more O-ring than additive, this model may <strong className="text-amber-400">overstate 
+                  labour displacement</strong> and <strong className="text-amber-400">understate wage resilience</strong>. 
+                  The relevant object isn't average task exposure but the structure of bottlenecks. A job with one 
+                  non-automatable task could see <em>rising</em> wages as AI amplifies the value of that bottleneck.
+                </p>
+                <p className="text-xs mt-2 text-zinc-500">
+                  This is a conservative assumption: separability implies that human labour value falls 
+                  proportionally with automation, rather than being scaled up by the automated components.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* 1. Compute Supply Pipeline */}
